@@ -58,9 +58,11 @@ export class Session {
     new Notice('"' + this.name + '" updated')
   }
 
-  removeEventListerers = () => {
+  cleanUp = () => {
     this.workspace.off("layout-change", this.workspaceLayoutUpdater)
     this.workspace.off("file-open", this.nameInitializer)
+
+    // this.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
   }
 
 }

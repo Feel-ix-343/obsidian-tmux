@@ -1,28 +1,19 @@
 import { Notice, Plugin } from 'obsidian';
 import { Session } from './Session';
-import { WorkspaceManager } from './WorkspaceManager';
+import { SessionManager } from './SessionManager';
 
 
 export default class ObsidianTmux extends Plugin {
   /** Workspaces indexed by id */
-  workspaceManager: WorkspaceManager
+  sessionManager: SessionManager
 
   onload = async () => {
-    this.workspaceManager = new WorkspaceManager()
+    this.sessionManager = new SessionManager(this.app.workspace)
 
 
     const createNewSession = () => {
 
-      // Reset the workspace to a default workspace
-      this.app.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
-
-      let newSession = new Session(
-        this.app.workspace,
-        this.app.workspace.getLayout(),
-        `Session (${[...this.workspaceManager.sessions.values()].length + 1})`
-      )
-
-      this.workspaceManager.createSession(newSession)
+      let newSession = this.sessionManager.createAndLoadSession()
 
       new Notice(`Session "${newSession.name}" created`)
     }
@@ -34,9 +25,9 @@ export default class ObsidianTmux extends Plugin {
     })
 
     const sessionsDisplay = this.addStatusBarItem()
-    this.workspaceManager.sessionUpdateSubscription(() => {
+    this.sessionManager.sessionUpdateSubscription(() => {
       console.log("DOING CHANGE")
-      let sessions = [...this.workspaceManager.sessions.values()]
+      let sessions = [...this.sessionManager.sessions.values()]
       console.log(sessions)
 
       let displayEl: Element;
@@ -50,7 +41,7 @@ export default class ObsidianTmux extends Plugin {
 
       sessions.forEach(session => {
         displayEl.createEl("span", { text: session.name, cls: "session_display_element" }, (el) => {
-          el.onclick = () => this.workspaceManager.changeSession(session)
+          el.onclick = () => this.sessionManager.changeSession(session)
         });
       })
     })
