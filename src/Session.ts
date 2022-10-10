@@ -14,17 +14,20 @@ export class Session {
   /** Obsidian workspace layout */
   private layout: any // TODO: Save position of side panels, save active leaf
 
-  constructor (workspace: Workspace, defaultSessionLayout: any, defaultName: string) {
+  nameInitializationCallback: () => void // TODO: Make this better; not global. It is global because nameInitializer is linked to an event listener and can not accept a callbackk in its arguements
+
+  constructor ({ workspace, defaultSessionLayout, defaultName }: { workspace: Workspace; defaultSessionLayout: any; defaultName: string }) {
     this.workspace = workspace
     this.name = defaultName
     this.layout = defaultSessionLayout
   }
 
   initializeName = (callback: () => void) => {
-    this.workspace.on('file-open', (file: TFile) => this.nameInitializer(file, callback))
+    this.nameInitializationCallback = callback
+    this.workspace.on('file-open', this.nameInitializer)
   }
 
-  private nameInitializer = (firstFile: TFile, callback: () => void) => {
+  private nameInitializer = (firstFile: TFile) => {
     // !file occurs on the first call to this function;  // TODO: Handle changing workspaces
     if (!firstFile) {
       return
@@ -38,14 +41,13 @@ export class Session {
 
     this.name = firstFile.name
     this.defaultName = false
-    console.log(firstFile.name)
 
     new Notice(`New workspace Renamed to: "${this.name}"`)
 
     // Killing the event listener
     this.workspace.off('file-open', this.nameInitializer)
 
-    callback()
+    this.nameInitializationCallback() // This should not be undefined
   }
 
   loadWorkspace = () => {

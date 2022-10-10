@@ -1,5 +1,4 @@
 import { Notice, Plugin } from 'obsidian';
-import { Session } from './Session';
 import { SessionManager } from './SessionManager';
 
 
@@ -26,21 +25,12 @@ export default class ObsidianTmux extends Plugin {
 
     const sessionsDisplay = this.addStatusBarItem()
     this.sessionManager.sessionUpdateSubscription(() => {
-      console.log("DOING CHANGE")
+      sessionsDisplay.querySelectorAll(".session_display_element").forEach(node => node.remove())
+
       let sessions = [...this.sessionManager.sessions.values()]
-      console.log(sessions)
-
-      let displayEl: Element;
-      if (sessionsDisplay.getElementsByClassName("session_display").length == 0) {
-        displayEl = sessionsDisplay.createDiv({cls: "session_display"})
-      } else {
-        displayEl = sessionsDisplay.getElementsByClassName("session_display").item(0)!
-      }
-
-      displayEl.innerHTML = ""
 
       sessions.forEach(session => {
-        displayEl.createEl("span", { text: session.name, cls: "session_display_element" }, (el) => {
+        sessionsDisplay.createEl("span", { text: session.name, cls: ["session_display_element status-bar-item mod-clickable"] }, (el) => {
           el.onclick = () => this.sessionManager.changeSession(session)
         });
       })

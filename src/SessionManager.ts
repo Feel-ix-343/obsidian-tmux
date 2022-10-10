@@ -17,15 +17,14 @@ export class SessionManager {
 
     this.sessions.get(this.activeSessionId)?.cleanUp()
 
-    console.log("cleanedup")
 
     this.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
 
-    let newSession = new Session(
-      this.workspace,
-      this.workspace.getLayout(),
-      `Session (${[...this.sessions.values()].length + 1})`
-    )
+    let newSession = new Session( {
+      workspace: this.workspace,
+      defaultSessionLayout: this.workspace.getLayout(),
+      defaultName: `Session (${[...this.sessions.values()].length + 1})` 
+    })
 
     this.sessions.set(newSession.id, newSession)
     this.activeSessionId = newSession.id
@@ -50,12 +49,10 @@ export class SessionManager {
   }
 
   private callUpdateSubscriptionObservers = () => {
-    console.log("updatign")
     this.sessionChangeObservers.forEach(callback => callback())
   }
 
   public sessionUpdateSubscription = (observer: () => void) => {
-    console.log("Observer Added")
     this.sessionChangeObservers.push(observer)
   }
 
