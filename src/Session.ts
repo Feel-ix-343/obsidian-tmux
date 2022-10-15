@@ -33,10 +33,10 @@ export class Session {
       return
     }
 
-    // precaution incase the event gets called twice before it finishes. IDRK
+    // precaution incase the event gets called twice before it finishes or name is changed by user before being automatically set
     if (!this.defaultName) {
       this.workspace.off('file-open', this.nameInitializer)
-      return // TODO: KILL THIS THING
+      return 
     }
 
     this.name = firstFile.name
@@ -53,8 +53,12 @@ export class Session {
   loadWorkspace = () => {
     if (this.layout) {
       this.workspace.changeLayout(this.layout)
-    } else { // Indicating the the default layout has not been changed
+    } else { // Indicating the the default layout has not been changed; still null
       this.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
+    }
+
+    if (this.defaultName) {
+      this.initializeName(this.nameInitializationCallback)
     }
 
     this.workspace.on("layout-change", this.workspaceLayoutUpdater)
