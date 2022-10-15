@@ -31,6 +31,17 @@ export default class ObsidianTmux extends Plugin {
       name: "Rename Active Session",
       callback: changeActiveSessionName
     })
+
+    this.addCommand({
+      id: "next-session",
+      name: "Go To Next Session",
+      callback: this.sessionManager.nextSession
+    })
+    this.addCommand({
+      id: "previous-session",
+      name: "Go To Previous Session",
+      callback: this.sessionManager.previousSession
+    })
      
     const sessionsDisplay = this.addStatusBarItem()
     this.sessionManager.sessionUpdateSubscription(() => {

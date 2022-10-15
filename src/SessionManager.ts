@@ -34,20 +34,6 @@ export class SessionManager {
     return newSession
   }
 
-  // TODO: Change session name
-
-  public changeActiveSessionName = (name: string) => {
-    let activeSession = this.sessions.get(this.activeSessionId)
-    if (!activeSession) {
-      new Notice("No Active Session")
-      return
-    }
-
-    activeSession.name = name
-    this.callUpdateSubscriptionObservers()
-    activeSession.defaultName = false
-  }
-
   public changeSession = (newSession: Session) => {
     // TODO: Check that session exists; or figure out better way
     this.sessions.get(this.activeSessionId)?.cleanUp()
@@ -68,6 +54,44 @@ export class SessionManager {
   public checkSessionActive(session: Session) {
     if (session.id == this.activeSessionId) return true
     else return false
+  }
+
+  public changeActiveSessionName = (name: string) => {
+    let activeSession = this.sessions.get(this.activeSessionId)
+    if (!activeSession) {
+      new Notice("No Active Session")
+      return
+    }
+
+    activeSession.name = name
+    this.callUpdateSubscriptionObservers()
+    activeSession.defaultName = false
+  }
+
+  private getSessionFromActive = (direction: number) => {
+    let ids = [...this.sessions.keys()]
+    let activeSessionIndex = ids.indexOf(this.activeSessionId)
+    let newSession = this.sessions.get(ids[activeSessionIndex + direction])
+
+    return newSession
+  }
+
+  public nextSession = () => {
+    let s = this.getSessionFromActive(1)
+    if (!s) {
+      new Notice("No Next Session")
+      return
+    }
+    this.changeSession(s)
+  }
+
+  public previousSession = () => {
+    let s = this.getSessionFromActive(-1)
+    if (!s) {
+      new Notice("No Previous Session")
+      return
+    }
+    this.changeSession(s)
   }
 
 
