@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceLeaf } from "obsidian"
+import { Notice, Workspace, WorkspaceLeaf } from "obsidian"
 import { Session } from "./Session"
 
 export class SessionManager {
@@ -35,6 +35,18 @@ export class SessionManager {
   }
 
   // TODO: Change session name
+
+  public changeActiveSessionName = (name: string) => {
+    let activeSession = this.sessions.get(this.activeSessionId)
+    if (!activeSession) {
+      new Notice("No Active Session")
+      return
+    }
+
+    activeSession.name = name
+    this.callUpdateSubscriptionObservers()
+    activeSession.defaultName = false
+  }
 
   public changeSession = (newSession: Session) => {
     // TODO: Check that session exists; or figure out better way
