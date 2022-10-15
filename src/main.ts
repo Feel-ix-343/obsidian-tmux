@@ -32,6 +32,18 @@ export default class ObsidianTmux extends Plugin {
       callback: changeActiveSessionName
     })
 
+    const changeActiveSessionName = () => {
+      new ChangeNameModal(this.app, (name) => {
+        this.sessionManager.changeActiveSessionName(name)
+      }).open()
+    }
+
+    this.addCommand({
+      id: "change-name",
+      name: "Rename Active Session",
+      callback: changeActiveSessionName
+    })
+
     const sessionsDisplay = this.addStatusBarItem()
     this.sessionManager.sessionUpdateSubscription(() => {
       sessionsDisplay.querySelectorAll(".session_display_element").forEach(node => node.remove())
