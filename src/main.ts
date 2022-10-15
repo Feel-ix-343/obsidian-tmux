@@ -1,4 +1,5 @@
 import { Notice, Plugin } from 'obsidian';
+import { ChangeNameModal } from './ChangeNameModal';
 import { SessionManager } from './SessionManager';
 
 
@@ -24,6 +25,18 @@ export default class ObsidianTmux extends Plugin {
       id: "test",
       name: "test",
       callback: this.sessionManager.clearWorkspace
+    })
+
+    const changeActiveSessionName = () => {
+      new ChangeNameModal(this.app, (name) => {
+        this.sessionManager.changeActiveSessionName(name)
+      }).open()
+    }
+
+    this.addCommand({
+      id: "change-name",
+      name: "Rename Active Session",
+      callback: changeActiveSessionName
     })
 
     const sessionsDisplay = this.addStatusBarItem()

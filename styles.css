@@ -18,4 +18,8 @@ If your plugin does not need CSS, delete this file.
   background-color: var(--background-modifier-hover);
 }
 
+.change-name-input {
+  width: 100%;
+}
+
 
