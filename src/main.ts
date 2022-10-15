@@ -31,7 +31,7 @@ export default class ObsidianTmux extends Plugin {
       name: "Rename Active Session",
       callback: changeActiveSessionName
     })
-
+     
     const sessionsDisplay = this.addStatusBarItem()
     this.sessionManager.sessionUpdateSubscription(() => {
       sessionsDisplay.querySelectorAll(".session_display_element").forEach(node => node.remove())
