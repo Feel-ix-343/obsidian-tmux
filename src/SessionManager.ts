@@ -1,11 +1,11 @@
-import { Workspace } from "obsidian"
+import { Workspace, WorkspaceLeaf } from "obsidian"
 import { Session } from "./Session"
 
 export class SessionManager {
   public readonly sessions = new Map<string, Session>()
   private readonly sessionChangeObservers: Array<() => void> = new Array()
-  private activeSessionId: string
   private readonly workspace: Workspace
+  private activeSessionId: string
 
   constructor(workspace: Workspace) {
     this.workspace = workspace
@@ -17,12 +17,9 @@ export class SessionManager {
 
     this.sessions.get(this.activeSessionId)?.cleanUp()
 
-
-    this.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
-
     let newSession = new Session( {
       workspace: this.workspace,
-      defaultSessionLayout: this.workspace.getLayout(),
+      defaultSessionLayout: null,
       defaultName: `Session (${[...this.sessions.values()].length + 1})` 
     })
 
@@ -32,7 +29,7 @@ export class SessionManager {
     // Updating observer on the new changes!! Exciting!!
     this.callUpdateSubscriptionObservers()
     newSession.initializeName(this.callUpdateSubscriptionObservers)
-    newSession.loadWorkspace() // Although there is nothing to load, the event listeners will be started from this function call
+    newSession.loadWorkspace() // Loads the default workspace
 
     return newSession
   }
@@ -55,6 +52,12 @@ export class SessionManager {
   public sessionUpdateSubscription = (observer: () => void) => {
     this.sessionChangeObservers.push(observer)
   }
+
+  public checkSessionActive(session: Session) {
+    if (session.id == this.activeSessionId) return true
+    else return false
+  }
+
 
   // TODO: const nextWorkspace()
   // TODO: const previousWorkspace()

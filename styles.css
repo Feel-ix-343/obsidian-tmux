@@ -10,6 +10,12 @@ If your plugin does not need CSS, delete this file.
 
 .session_display_element {
   height: 30px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.hovered {
+  background-color: var(--background-modifier-hover);
 }
 
 

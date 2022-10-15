@@ -1,11 +1,11 @@
-import { randomUUID } from "crypto"
+import * as crypto from 'crypto'
 import { Notice, TFile, Workspace } from "obsidian"
 
 /**
 A group of related obsidian leafs
 */
 export class Session {
-  readonly id = randomUUID()
+  readonly id = crypto.randomBytes(10).toString("hex")
   /** When a workspace is initialized, it will be given a default name of Workspace ([workspace index]); this propety idicates if the workspace still has that name */
   defaultName = true
 
@@ -51,13 +51,18 @@ export class Session {
   }
 
   loadWorkspace = () => {
-    this.workspace.changeLayout(this.layout)
+    if (this.layout) {
+      this.workspace.changeLayout(this.layout)
+    } else { // Indicating the the default layout has not been changed
+      this.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
+    }
+
     this.workspace.on("layout-change", this.workspaceLayoutUpdater)
   }
 
   private workspaceLayoutUpdater = () => {
     this.layout = this.workspace.getLayout()
-    new Notice('"' + this.name + '" updated')
+    new Notice(`"${this.name}" updated`)
   }
 
   cleanUp = () => {
