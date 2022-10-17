@@ -62,6 +62,9 @@ export class Session {
     }
 
     this.workspace.on("layout-change", this.workspaceLayoutUpdater)
+    this.workspace.on("file-open", this.workspaceLayoutUpdater)
+    this.workspace.on("editor-change", this.workspaceLayoutUpdater)
+
   }
 
   private workspaceLayoutUpdater = () => {
@@ -71,7 +74,11 @@ export class Session {
 
   cleanUp = () => {
     this.workspace.off("layout-change", this.workspaceLayoutUpdater)
+    this.workspace.off("file-open", this.workspaceLayoutUpdater)
+    this.workspace.off("editor-change", this.workspaceLayoutUpdater)
+
     this.workspace.off("file-open", this.nameInitializer)
+
 
     // this.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
   }
