@@ -93,8 +93,4 @@ export class SessionManager {
     }
     this.changeSession(s)
   }
-
-
-  // TODO: const nextWorkspace()
-  // TODO: const previousWorkspace()
 }
