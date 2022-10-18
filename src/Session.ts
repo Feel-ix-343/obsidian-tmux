@@ -69,7 +69,6 @@ export class Session {
 
   private workspaceLayoutUpdater = () => {
     this.layout = this.workspace.getLayout()
-    new Notice(`"${this.name}" updated`)
   }
 
   cleanUp = () => {
