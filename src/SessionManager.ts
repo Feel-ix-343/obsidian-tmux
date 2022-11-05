@@ -17,11 +17,11 @@ export class SessionManager {
   public createAndLoadSession = (): Session => {
     this.sessions.get(this.activeSessionId)?.cleanUp()
 
-    const newSession = new Session( {
-      workspace: this.workspace,
-      defaultSessionLayout: null,
-      defaultName: 'New Session' 
-    })
+    const newSession = new Session(
+            this.workspace,
+            null,
+            'New Session'
+    )
 
     this.sessions.set(newSession.id, newSession)
     this.activeSessionId = newSession.id
