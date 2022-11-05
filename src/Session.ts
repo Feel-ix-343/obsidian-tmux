@@ -80,9 +80,6 @@ export class Session {
     const cursor = view.editor.getCursor()
     this.lineNumber = cursor.line
     this.character = cursor.ch
-
-    console.log(cursor.ch)
-    console.log(cursor.line)
   }
 
   public loadCursorPosition = () => {
