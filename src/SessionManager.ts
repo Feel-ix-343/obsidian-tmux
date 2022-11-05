@@ -1,5 +1,6 @@
-import { Notice, Workspace, WorkspaceLeaf } from "obsidian"
+import { Notice, Workspace } from "obsidian"
 import { Session } from "./Session"
+
 
 export class SessionManager {
   public readonly sessions = new Map<string, Session>()
@@ -14,13 +15,12 @@ export class SessionManager {
   }
 
   public createAndLoadSession = (): Session => {
-
     this.sessions.get(this.activeSessionId)?.cleanUp()
 
-    let newSession = new Session( {
+    const newSession = new Session( {
       workspace: this.workspace,
       defaultSessionLayout: null,
-      defaultName: `Session (${[...this.sessions.values()].length + 1})` 
+      defaultName: 'New Session' 
     })
 
     this.sessions.set(newSession.id, newSession)
@@ -68,7 +68,7 @@ export class SessionManager {
     activeSession.defaultName = false
   }
 
-  private getSessionFromActive = (direction: number) => {
+  private getSessionFromActive = (direction: number): Session | undefined => {
     let ids = [...this.sessions.keys()]
     let activeSessionIndex = ids.indexOf(this.activeSessionId)
     let newSession = this.sessions.get(ids[activeSessionIndex + direction])
