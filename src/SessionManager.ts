@@ -93,4 +93,28 @@ export class SessionManager {
     }
     this.changeSession(s)
   }
+
+  public killSession = (sessionId: string) => {
+    if (sessionId == this.activeSessionId) {
+      // Switch sessions
+      const sleft = this.getSessionFromActive(-1)
+      if (sleft) {
+        this.changeSession(sleft)
+      } else {
+        const sright = this.getSessionFromActive(1)
+        if (sright) {
+          this.changeSession(sright)
+        } else {
+          this.createAndLoadSession()
+        }
+      }
+    }
+
+    this.sessions.delete(sessionId)
+    this.callUpdateSubscriptionObservers()
+  }
+
+  public killActiveSession = () => {
+    this.killSession(this.activeSessionId)
+  }
 }
