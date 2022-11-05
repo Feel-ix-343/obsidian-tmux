@@ -1,8 +1,6 @@
 import { Menu, Notice, Plugin } from 'obsidian';
 import { ChangeNameModal } from './ChangeNameModal';
 import { SessionManager } from './SessionManager';
-import $ from "jquery"
-import "jquery.scrollto"
 
 
 export default class ObsidianTmux extends Plugin {
@@ -14,12 +12,13 @@ export default class ObsidianTmux extends Plugin {
 
 
     const createNewSession = () => {
-      let newSession = this.sessionManager.createAndLoadSession()
+      const newSession = this.sessionManager.createAndLoadSession()
       new Notice(`Session "${newSession.name}" created`)
     }
     this.addCommand({
       id: "create-session",
       name: "Create Blank Session",
+      hotkeys: [{modifiers: ["Mod", "Shift"], key: "c"}],
       callback: createNewSession
     })
 
@@ -31,24 +30,28 @@ export default class ObsidianTmux extends Plugin {
     this.addCommand({
       id: "change-name",
       name: "Rename Active Session",
+      hotkeys: [{modifiers: ["Mod", "Shift"], key: ","}],
       callback: changeActiveSessionName
     })
 
     this.addCommand({
       id: "next-session",
       name: "Go To Next Session",
+      hotkeys: [{modifiers: ["Mod", "Shift"], key: "n"}],
       callback: this.sessionManager.nextSession
     })
 
     this.addCommand({
       id: "previous-session",
       name: "Go To Previous Session",
+      hotkeys: [{modifiers: ["Mod", "Shift"], key: "p"}],
       callback: this.sessionManager.previousSession
     })
 
     this.addCommand({
       id: "kill-active-session",
       name: "Kill Active Session",
+      hotkeys: [{modifiers: ["Mod", "Shift"], key: "x"}],
       callback: this.sessionManager.killActiveSession
     })
      
@@ -61,7 +64,7 @@ export default class ObsidianTmux extends Plugin {
       sessionsDisplayContainer.querySelectorAll(".session_display_element").forEach(node => node.remove())
       sessionsDisplayContainer.querySelectorAll(".session_close_button").forEach(node => node.remove())
 
-      let sessions = [...this.sessionManager.sessions.values()]
+      const sessions = [...this.sessionManager.sessions.values()]
 
       sessions.forEach(session => {
         sessionsDisplayContainer.createEl(

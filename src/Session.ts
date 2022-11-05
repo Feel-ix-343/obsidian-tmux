@@ -1,5 +1,5 @@
 import * as crypto from 'crypto'
-import { App, Editor, EditorRange, MarkdownView, Notice, TFile, Workspace } from "obsidian"
+import { EditorRange, MarkdownView, Notice, TFile, Workspace } from "obsidian"
 
 /**
 A group of related obsidian leafs

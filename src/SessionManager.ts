@@ -4,7 +4,7 @@ import { Session } from "./Session"
 
 export class SessionManager {
   public readonly sessions = new Map<string, Session>()
-  private readonly sessionChangeObservers: Array<() => void> = new Array()
+  private readonly sessionChangeObservers: Array<() => void> = []
   private readonly workspace: Workspace
   private activeSessionId: string
 
@@ -57,7 +57,7 @@ export class SessionManager {
   }
 
   public changeActiveSessionName = (name: string) => {
-    let activeSession = this.sessions.get(this.activeSessionId)
+    const activeSession = this.sessions.get(this.activeSessionId)
     if (!activeSession) {
       new Notice("No Active Session")
       return
@@ -69,15 +69,15 @@ export class SessionManager {
   }
 
   private getSessionFromActive = (direction: number): Session | undefined => {
-    let ids = [...this.sessions.keys()]
-    let activeSessionIndex = ids.indexOf(this.activeSessionId)
-    let newSession = this.sessions.get(ids[activeSessionIndex + direction])
+    const ids = [...this.sessions.keys()]
+    const activeSessionIndex = ids.indexOf(this.activeSessionId)
+    const newSession = this.sessions.get(ids[activeSessionIndex + direction])
 
     return newSession
   }
 
   public nextSession = () => {
-    let s = this.getSessionFromActive(1)
+    const s = this.getSessionFromActive(1)
     if (!s) {
       new Notice("No Next Session")
       return
@@ -86,7 +86,7 @@ export class SessionManager {
   }
 
   public previousSession = () => {
-    let s = this.getSessionFromActive(-1)
+    const s = this.getSessionFromActive(-1)
     if (!s) {
       new Notice("No Previous Session")
       return
