@@ -1,5 +1,5 @@
 import * as crypto from 'crypto'
-import { Notice, TFile, Workspace } from "obsidian"
+import { App, Editor, EditorRange, MarkdownView, Notice, TFile, Workspace } from "obsidian"
 
 /**
 A group of related obsidian leafs
@@ -11,12 +11,16 @@ export class Session {
 
   name: string
   private workspace: Workspace
+
   /** Obsidian workspace layout */
   private layout: any // TODO: Save position of side panels, save active leaf
 
+  private lineNumber: number
+  private character: number
+
   nameInitializationCallback: () => void // TODO: Make this better; not global. It is global because nameInitializer is linked to an event listener and can not accept a callbackk in its arguements
 
-  constructor ({ workspace, defaultSessionLayout, defaultName }: { workspace: Workspace; defaultSessionLayout: any; defaultName: string }) {
+  constructor (workspace: Workspace, defaultSessionLayout: any, defaultName: string) {
     this.workspace = workspace
     this.name = defaultName
     this.layout = defaultSessionLayout
@@ -63,23 +67,54 @@ export class Session {
 
     this.workspace.on("layout-change", this.workspaceLayoutUpdater)
     this.workspace.on("file-open", this.workspaceLayoutUpdater)
-    this.workspace.on("editor-change", this.workspaceLayoutUpdater)
-
+    this.workspace.on('file-open', this.loadCursorPosition)
   }
+
+  private saveCursorPosition = () => {
+    const view = this.workspace.getActiveViewOfType(MarkdownView)
+    if (!view) {
+      return
+    } 
+
+
+    const cursor = view.editor.getCursor()
+    this.lineNumber = cursor.line
+    this.character = cursor.ch
+
+    console.log(cursor.ch)
+    console.log(cursor.line)
+  }
+
+  public loadCursorPosition = () => {
+    const view = this.workspace.getActiveViewOfType(MarkdownView)
+    if (!view) {
+      return
+    }
+
+    view.editor.setCursor(this.lineNumber, this.character)
+
+    const editorRange: EditorRange = {
+      from: view.editor.getCursor(),
+      to: view.editor.getCursor()
+    }
+
+    view.editor.scrollIntoView(editorRange, true)
+
+    this.workspace.off("file-open", this.loadCursorPosition)
+  } 
 
   private workspaceLayoutUpdater = () => {
     this.layout = this.workspace.getLayout()
   }
 
+  // TODO: Simplify: Cant you just save only on close?
   cleanUp = () => {
     this.workspace.off("layout-change", this.workspaceLayoutUpdater)
     this.workspace.off("file-open", this.workspaceLayoutUpdater)
-    this.workspace.off("editor-change", this.workspaceLayoutUpdater)
-
+    this.workspace.off('file-open', this.loadCursorPosition)
     this.workspace.off("file-open", this.nameInitializer)
 
-
-    // this.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
+    this.saveCursorPosition()
   }
 
 }
