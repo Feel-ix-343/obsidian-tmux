@@ -55,7 +55,7 @@ export class Session {
   }
 
   loadWorkspace = () => {
-    if (this.layout) {
+    if (this.layout) { // If there is a saved layout
       this.workspace.changeLayout(this.layout)
     } else { // Indicating the the default layout has not been changed; still null
       this.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
@@ -65,8 +65,8 @@ export class Session {
       this.initializeName(this.nameInitializationCallback)
     }
 
-    this.workspace.on("layout-change", this.workspaceLayoutUpdater)
-    this.workspace.on("file-open", this.workspaceLayoutUpdater)
+    
+    // Because the file does not open right when the workspace is switched, I need to open in on the file change
     this.workspace.on('file-open', this.loadCursorPosition)
   }
 
@@ -104,13 +104,17 @@ export class Session {
     this.layout = this.workspace.getLayout()
   }
 
-  // TODO: Simplify: Cant you just save only on close?
   cleanUp = () => {
-    this.workspace.off("layout-change", this.workspaceLayoutUpdater)
-    this.workspace.off("file-open", this.workspaceLayoutUpdater)
+    // Referenced in the loadWorkspace function, the loadCursor will be run when the first file is opened. When the workspace is closed, this listener needs to be turned off. 
     this.workspace.off('file-open', this.loadCursorPosition)
+
+    // Saving the state of the workspace
+    this.workspaceLayoutUpdater()
+
+    // Stopping the name initialzation function
     this.workspace.off("file-open", this.nameInitializer)
 
+    // Saving the cursor position to be loaded at the next loadWorkspace call
     this.saveCursorPosition()
   }
 
