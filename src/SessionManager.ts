@@ -38,6 +38,8 @@ export class SessionManager {
     this.sessions.get(this.activeSessionId)?.cleanUp()
     this.activeSessionId = newSession.id
     newSession.loadWorkspace()
+    // If the new session is still default
+    if (newSession.defaultName) newSession.initializeName(this.callUpdateSubscriptionObservers)
 
     this.callUpdateSubscriptionObservers()
   }
