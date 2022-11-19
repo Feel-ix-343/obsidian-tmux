@@ -13,21 +13,21 @@ export class Session {
   private workspace: Workspace
 
   /** Obsidian workspace layout */
-  private layout: any // TODO: Save position of side panels, save active leaf
+  private layout: unknown 
 
   private lineNumber: number
   private character: number
 
   nameInitializationCallback: () => void // TODO: Make this better; not global. It is global because nameInitializer is linked to an event listener and can not accept a callbackk in its arguements
 
-  constructor (workspace: Workspace, defaultSessionLayout: any, defaultName: string) {
+  constructor (workspace: Workspace, defaultSessionLayout: unknown, defaultName: string) {
     this.workspace = workspace
     this.name = defaultName
     this.layout = defaultSessionLayout
   }
 
   initializeName = (callback: () => void) => {
-    this.nameInitializationCallback = callback
+    this.nameInitializationCallback = callback // Sets this so the nameInitializer will be able to access it. This is confusing because I want to use nameInitializer as a references for the workspace.off function, so I am not giving it parameters. 
     this.workspace.on('file-open', this.nameInitializer)
   }
 

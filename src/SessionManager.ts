@@ -35,7 +35,6 @@ export class SessionManager {
   }
 
   public changeSession = (newSession: Session) => {
-    // TODO: Check that session exists; or figure out better way
     this.sessions.get(this.activeSessionId)?.cleanUp()
     this.activeSessionId = newSession.id
     newSession.loadWorkspace()
