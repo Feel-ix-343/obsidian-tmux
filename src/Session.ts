@@ -26,13 +26,36 @@ export class Session {
     this.layout = defaultSessionLayout
   }
 
-  initializeName = (callback: () => void) => {
-    this.nameInitializationCallback = callback // Sets this so the nameInitializer will be able to access it. This is confusing because I want to use nameInitializer as a references for the workspace.off function, so I am not giving it parameters. 
-    this.workspace.on('file-open', this.nameInitializer)
+
+  loadWorkspace = () => {
+    if (this.layout) { // If there is a saved layout
+      this.workspace.changeLayout(this.layout)
+    } else { // Indicating the the default layout has not been changed; still null as assigned from SessionManager
+      this.workspace.detachLeavesOfType("markdown") 
+    }
+    // Because the file does not open right when the workspace is switched, I need to open in on the file change
+    this.workspace.on('file-open', this.loadCursorPosition)
   }
 
+  /** Will initiate renaming the session to the first opened file */
+  initializeName = (callback: () => void) => {
+    this.nameInitializationCallback = callback // Sets this so the nameInitializer will be able to access it. This is confusing because I want to use nameInitializer as a references for the workspace.off function, so I am not giving it parameters. 
+
+    const compose = async (file: TFile) => {
+      if (!file) return // Somehow prevents lazy evaluation, which turns off the event listener before the function is called? WTF javascript. 
+      this.nameInitializer(file)
+      this.workspace.off("file-open", compose)
+      callback()
+    }
+
+    this.turnOffNameInitializer = () => this.workspace.off("file-open", compose)
+    this.workspace.on('file-open', compose)
+  }
+
+  /** This function is definied by the initialze name function, and at first is undefined. */
+  private turnOffNameInitializer: (() => void) | null
+
   private nameInitializer = (firstFile: TFile) => {
-    // !file occurs on the first call to this function;  // TODO: Handle changing workspaces
     if (!firstFile) {
       return
     }
@@ -49,25 +72,8 @@ export class Session {
     new Notice(`New workspace Renamed to: "${this.name}"`)
 
     // Killing the event listener
-    this.workspace.off('file-open', this.nameInitializer)
+    // this.workspace.off('file-open', this.nameInitializer)
 
-    this.nameInitializationCallback() // This should not be undefined
-  }
-
-  loadWorkspace = () => {
-    if (this.layout) { // If there is a saved layout
-      this.workspace.changeLayout(this.layout)
-    } else { // Indicating the the default layout has not been changed; still null
-      this.workspace.detachLeavesOfType("markdown") // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
-    }
-
-    if (this.defaultName) {
-      this.initializeName(this.nameInitializationCallback)
-    }
-
-    
-    // Because the file does not open right when the workspace is switched, I need to open in on the file change
-    this.workspace.on('file-open', this.loadCursorPosition)
   }
 
   private saveCursorPosition = () => {
@@ -112,7 +118,7 @@ export class Session {
     this.workspaceLayoutUpdater()
 
     // Stopping the name initialzation function
-    this.workspace.off("file-open", this.nameInitializer)
+    if (this.turnOffNameInitializer) this.turnOffNameInitializer()
 
     // Saving the cursor position to be loaded at the next loadWorkspace call
     this.saveCursorPosition()
