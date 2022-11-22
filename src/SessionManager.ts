@@ -32,9 +32,10 @@ export class SessionManager {
     newDefaultSession.loadSession() // Loads the default workspace
 
     newDefaultSession.initializeName().then(workingSession => {
-      console.log(workingSession?.name)
-      if (workingSession) this.sessions.set(this.activeSessionId, workingSession)
-      this.callUpdateSubscriptionObservers()
+      if (workingSession) { 
+        this.sessions.set(this.activeSessionId, workingSession)
+        this.callUpdateSubscriptionObservers()
+      }
     })
 
     return newDefaultSession
@@ -43,7 +44,18 @@ export class SessionManager {
   public changeSession = (newSession: Session) => {
     this.sessions.get(this.activeSessionId)?.cleanUp()
     this.activeSessionId = newSession.id
+
     newSession.loadSession()
+
+    if (newSession instanceof DefaultSessionState) {
+      newSession.initializeName().then(workingSession => {
+        if (workingSession) { 
+          this.sessions.set(this.activeSessionId, workingSession)
+          this.callUpdateSubscriptionObservers()
+        }
+      })
+    }
+
     this.callUpdateSubscriptionObservers()
   }
 
@@ -55,7 +67,7 @@ export class SessionManager {
     this.sessionChangeObservers.push(observer)
   }
 
-  public checkSessionActive(session: Session) {
+  public checkSessionActive = (session: Session) => {
     if (session.id == this.activeSessionId) return true
     else return false
   }
