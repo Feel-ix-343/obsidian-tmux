@@ -22,7 +22,7 @@ export class SessionManager {
   }
 
   public createAndLoadSession = async (): Promise<Session> => {
-    this.sessions.get(this.activeSessionId)?.cleanUp()
+    await this.sessions.get(this.activeSessionId)?.cleanUp()
 
     const newDefaultSession = new DefaultSessionState(
       this.workspace,
@@ -49,11 +49,11 @@ export class SessionManager {
     return newDefaultSession
   }
 
-  public changeSession = (newSession: Session) => {
-    this.sessions.get(this.activeSessionId)?.cleanUp()
+  public changeSession = async (newSession: Session) => {
+    await this.sessions.get(this.activeSessionId)?.cleanUp()
     this.activeSessionId = newSession.id
 
-    newSession.loadSession()
+    await newSession.loadSession()
 
     if (newSession instanceof DefaultSessionState) {
       newSession.initializeName().then(workingSession => {
@@ -142,5 +142,33 @@ export class SessionManager {
 
   public killActiveSession = () => {
     this.killSession(this.activeSessionId)
+  }
+
+  public moveCurrentNoteToNewWorkspace = async () => {
+    // TODO: Simplfy the creation process
+
+    // Save the current file
+    const activeFile = this.workspace.getActiveFile()
+    if (!activeFile) {
+      new Notice("No Active File")
+      return
+    }
+    // Close the current workspace
+    await this.sessions.get(this.activeSessionId)?.cleanUp()
+
+    // Creating and loading a new session
+    const newSession = new DefaultSessionState(this.workspace, null, "opening file...")
+    this.sessions.set(newSession.id, newSession)
+    this.activeSessionId = newSession.id
+    this.callUpdateSubscriptionObservers()
+
+    await newSession.loadSession()
+
+    // Open the new file
+    this.workspace.getMostRecentLeaf()?.openFile(activeFile) // This should implicitly update the session created above. 
+
+    const newWorkingSession = newSession.changeName(activeFile.name)
+    this.sessions.set(newSession.id, newWorkingSession)
+    this.callUpdateSubscriptionObservers()
   }
 }

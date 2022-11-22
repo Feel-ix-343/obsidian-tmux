@@ -22,8 +22,8 @@ export abstract class Session {
   }
 
 
-  public abstract loadSession: () => void
-  public abstract cleanUp: () => void
+  public abstract loadSession: () => Promise<void>
+  public abstract cleanUp: () => Promise<void>
 }
 
 export class DefaultSessionState extends Session {
@@ -65,13 +65,13 @@ export class DefaultSessionState extends Session {
     this.activeSession = true
   }
 
-  cleanUp = () => {
+  cleanUp = async () => {
     this.activeSession = false
   }
 
-  changeName = (name: string, callback: () => void): WorkingSessionState => {
+  changeName = (name: string, callback?: () => void): WorkingSessionState => {
     const workingSession = new WorkingSessionState(this.workspace, this.layout, name, this.id)
-    callback()
+    if (callback) callback()
     return workingSession
   }
 
@@ -79,7 +79,7 @@ export class DefaultSessionState extends Session {
 
 export class WorkingSessionState extends Session {
 
-  constructor(workspace: Workspace, workingSessionLayout: unknown, name: string, id: string) { 
+  constructor(workspace: Workspace, workingSessionLayout: unknown, name: string, id?: string) { 
     super (workspace, workingSessionLayout, name, id)
   }
 
@@ -120,8 +120,8 @@ export class WorkingSessionState extends Session {
     this.layout = this.workspace.getLayout()
   }
 
-  loadSession = () => {
-    this.workspace.changeLayout(this.layout)
+  loadSession = async () => {
+    await this.workspace.changeLayout(this.layout)
 
     // Because the file does not open right when the workspace is switched, I need to open in on the file change
     this.workspace.on('file-open', this.loadCursorPosition)
@@ -132,7 +132,7 @@ export class WorkingSessionState extends Session {
     callback()
   }
 
-  cleanUp = () => {
+  cleanUp = async () => {
     // Referenced in the loadWorkspace function, the loadCursor will be run when the first file is opened. When the workspace is closed, this listener needs to be turned off. 
     this.workspace.off('file-open', this.loadCursorPosition)
 

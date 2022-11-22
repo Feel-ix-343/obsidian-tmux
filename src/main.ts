@@ -22,6 +22,7 @@ export default class ObsidianTmux extends Plugin {
       callback: createNewSession
     })
 
+
     const changeActiveSessionName = () => {
       new ChangeNameModal(this.app, (name) => {
         this.sessionManager.changeActiveSessionName(name)
@@ -59,6 +60,12 @@ export default class ObsidianTmux extends Plugin {
       id: "set-default-session",
       name: "Set Default Session",
       callback: this.sessionManager.setDefaultWorkspace
+    })
+
+    this.addCommand({
+      id: "open-current-file-in-new-session",
+      name: "Open Current File in New Session",
+      callback: this.sessionManager.moveCurrentNoteToNewWorkspace
     })
      
 
