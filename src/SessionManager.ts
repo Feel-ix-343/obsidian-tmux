@@ -21,7 +21,7 @@ export class SessionManager {
     new Notice("Default Session Set")
   }
 
-  public createAndLoadSession = (): Session => {
+  public createAndLoadSession = async (): Promise<Session> => {
     this.sessions.get(this.activeSessionId)?.cleanUp()
 
     const newDefaultSession = new DefaultSessionState(
@@ -36,7 +36,8 @@ export class SessionManager {
     // Updating observer on the new changes!! Exciting!!
     this.callUpdateSubscriptionObservers()
     // newDefaultSession.initializeName(this.callUpdateSubscriptionObservers)
-    newDefaultSession.loadSession() // Loads the default workspace
+
+    await newDefaultSession.loadSession() // Loads the default workspace
 
     newDefaultSession.initializeName().then(workingSession => {
       if (workingSession) { 

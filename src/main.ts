@@ -11,8 +11,8 @@ export default class ObsidianTmux extends Plugin {
     this.sessionManager = new SessionManager(this.app.workspace)
 
 
-    const createNewSession = () => {
-      const newSession = this.sessionManager.createAndLoadSession()
+    const createNewSession = async () => {
+      const newSession = await this.sessionManager.createAndLoadSession()
       new Notice(`Session "${newSession.name}" created`)
     }
     this.addCommand({

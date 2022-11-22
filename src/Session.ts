@@ -56,9 +56,9 @@ export class DefaultSessionState extends Session {
     return nextState
   }
 
-  loadSession = () => {
+  loadSession = async () => {
     if (this.layout) {
-      this.workspace.changeLayout(this.layout)
+      await this.workspace.changeLayout(this.layout)
     } else {
       this.workspace.detachLeavesOfType("markdown") 
     }
