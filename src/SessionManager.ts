@@ -19,7 +19,7 @@ export class SessionManager {
 
     const newDefaultSession = new DefaultSessionState(
       this.workspace,
-      null, // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
+      null, // TODO: have the user define a default layout; this would allow someboyd like you to reset to the flow note
       'New Session',
     )
 
@@ -31,8 +31,10 @@ export class SessionManager {
     // newDefaultSession.initializeName(this.callUpdateSubscriptionObservers)
     newDefaultSession.loadSession() // Loads the default workspace
 
-    newDefaultSession.initializeName(this.callUpdateSubscriptionObservers).then(workingSession => {
+    newDefaultSession.initializeName().then(workingSession => {
+      console.log(workingSession?.name)
       if (workingSession) this.sessions.set(this.activeSessionId, workingSession)
+      this.callUpdateSubscriptionObservers()
     })
 
     return newDefaultSession

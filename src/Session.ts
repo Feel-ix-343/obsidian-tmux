@@ -5,7 +5,7 @@ import { EditorRange, MarkdownView, Notice, TFile, Workspace } from "obsidian"
 A group of related obsidian leafs
 */
 export abstract class Session {
-  readonly id = crypto.randomBytes(10).toString("hex")
+  public id: string
 
   name: string
   protected workspace: Workspace
@@ -14,11 +14,13 @@ export abstract class Session {
   protected layout: unknown 
 
 
-  constructor (workspace: Workspace, defaultSessionLayout: unknown, defaultName: string) {
+  constructor (workspace: Workspace, defaultSessionLayout: unknown, defaultName: string, id?: string) {
     this.workspace = workspace
     this.name = defaultName
     this.layout = defaultSessionLayout
+    this.id = id? id : crypto.randomBytes(10).toString("hex")
   }
+
 
   public abstract loadSession: () => void
   public abstract cleanUp: () => void
@@ -28,13 +30,14 @@ export class DefaultSessionState extends Session {
   private activeSession: boolean
 
   /** Will initiate renaming the session to the first opened file */
-  initializeName = async (callback: () => void): Promise<WorkingSessionState | null> => {
+  initializeName = async (): Promise<WorkingSessionState | null> => {
     const activeSession = this.activeSession // Idk what to do about this
 
+    const workspace = this.workspace
     const file: TFile = await new Promise(resolve => {
-      this.workspace.on("file-open", function(file: TFile) {
-        if (!activeSession) return // If the session has changed
-        this.workspace.off("file-open", this)
+      workspace.on("file-open", function(file: TFile) {
+        if (!activeSession || !file) return // If the session has changed
+        workspace.off("file-open", this)
         resolve(file)
       })
     })
@@ -43,11 +46,10 @@ export class DefaultSessionState extends Session {
 
     const name = file.name
     new Notice(`New workspace Renamed to: "${this.name}"`)
-    callback()
 
     // After Default session is renamed, it becomes a working session, so working state
 
-    const nextState = new WorkingSessionState(this.workspace, this.layout, name)
+    const nextState = new WorkingSessionState(this.workspace, this.layout, name, this.id)
     return nextState
   }
 
@@ -61,7 +63,7 @@ export class DefaultSessionState extends Session {
   }
 
   changeName = (name: string, callback: () => void): WorkingSessionState => {
-    const workingSession = new WorkingSessionState(this.workspace, this.layout, name)
+    const workingSession = new WorkingSessionState(this.workspace, this.layout, name, this.id)
     callback()
     return workingSession
   }
@@ -70,8 +72,8 @@ export class DefaultSessionState extends Session {
 
 export class WorkingSessionState extends Session {
 
-  constructor(workspace: Workspace, workingSessionLayout: unknown, name: string) { // TODO: Make package visibility
-    super (workspace, workingSessionLayout, name)
+  constructor(workspace: Workspace, workingSessionLayout: unknown, name: string, id: string) { // TODO: Make package visibility
+    super (workspace, workingSessionLayout, name, id)
   }
 
   private lineNumber: number
