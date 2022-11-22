@@ -57,7 +57,11 @@ export class DefaultSessionState extends Session {
   }
 
   loadSession = () => {
-    this.workspace.detachLeavesOfType("markdown") 
+    if (this.layout) {
+      this.workspace.changeLayout(this.layout)
+    } else {
+      this.workspace.detachLeavesOfType("markdown") 
+    }
     this.activeSession = true
   }
 

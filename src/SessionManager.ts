@@ -6,7 +6,10 @@ export class SessionManager {
   public readonly sessions = new Map<string, Session>()
   private readonly sessionChangeObservers: Array<() => void> = []
   private readonly workspace: Workspace
-  private activeSessionId: string
+
+  private defaultWorkspace = null
+
+  private activeSessionId: string // GLOBAL MUTABLE VARIABLE ALERT DONT HURT ME
 
   constructor(workspace: Workspace) {
     this.workspace = workspace
@@ -14,12 +17,17 @@ export class SessionManager {
     // TODO: Load saved default or previously active
   }
 
+  public setDefaultWorkspace = () => {
+    this.defaultWorkspace = this.workspace.getLayout()
+    new Notice("Default Session Set")
+  }
+
   public createAndLoadSession = (): Session => {
     this.sessions.get(this.activeSessionId)?.cleanUp()
 
     const newDefaultSession = new DefaultSessionState(
       this.workspace,
-      null, // TODO: have the user define a default layout; this would allow someboyd like you to reset to the flow note
+      this.defaultWorkspace, // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
       'New Session',
     )
 

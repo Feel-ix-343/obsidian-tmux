@@ -54,6 +54,12 @@ export default class ObsidianTmux extends Plugin {
       hotkeys: [{modifiers: ["Mod", "Shift"], key: "x"}],
       callback: this.sessionManager.killActiveSession
     })
+
+    this.addCommand({
+      id: "set-default-session",
+      name: "Set Default Session",
+      callback: this.sessionManager.setDefaultWorkspace
+    })
      
 
     const sessionsDisplay = this.addStatusBarItem()
