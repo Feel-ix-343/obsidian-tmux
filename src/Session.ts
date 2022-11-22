@@ -45,7 +45,7 @@ export class DefaultSessionState extends Session {
     })
 
 
-    if (!activeSession()) return null // If the session has changed // TODO: Fix duplicate renaming notifications
+    if (!activeSession()) return null // If the session has changed 
 
     const name = file.name
     new Notice(`New workspace Renamed to: "${name}"`)
@@ -79,7 +79,7 @@ export class DefaultSessionState extends Session {
 
 export class WorkingSessionState extends Session {
 
-  constructor(workspace: Workspace, workingSessionLayout: unknown, name: string, id: string) { // TODO: Make package visibility
+  constructor(workspace: Workspace, workingSessionLayout: unknown, name: string, id: string) { 
     super (workspace, workingSessionLayout, name, id)
   }
 

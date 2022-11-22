@@ -14,7 +14,6 @@ export class SessionManager {
   constructor(workspace: Workspace) {
     this.workspace = workspace
     // TODO: Restore saved sessions
-    // TODO: Load saved default or previously active
   }
 
   public setDefaultWorkspace = () => {
@@ -27,7 +26,7 @@ export class SessionManager {
 
     const newDefaultSession = new DefaultSessionState(
       this.workspace,
-      this.defaultWorkspace, // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
+      this.defaultWorkspace,
       'New Session',
     )
 
