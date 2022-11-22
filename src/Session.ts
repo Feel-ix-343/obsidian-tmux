@@ -79,6 +79,11 @@ export class DefaultSessionState extends Session {
 
 export class WorkingSessionState extends Session {
 
+  /**
+  Constructors a working session state
+  This probably should not be used by files outside of session.ts but IDK how to restrict that
+  @param workingSessionLayout Although this is unknown (for obsidian api reasons), it can not be null. 
+  */
   constructor(workspace: Workspace, workingSessionLayout: unknown, name: string, id?: string) { 
     super (workspace, workingSessionLayout, name, id)
   }
