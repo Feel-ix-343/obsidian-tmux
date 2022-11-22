@@ -4,21 +4,15 @@ import { EditorRange, MarkdownView, Notice, TFile, Workspace } from "obsidian"
 /**
 A group of related obsidian leafs
 */
-export class Session {
+export abstract class Session {
   readonly id = crypto.randomBytes(10).toString("hex")
-  /** When a workspace is initialized, it will be given a default name of Workspace ([workspace index]); this propety idicates if the workspace still has that name */
-  defaultName = true
 
   name: string
-  private workspace: Workspace
+  protected workspace: Workspace
 
   /** Obsidian workspace layout */
-  private layout: unknown 
+  protected layout: unknown 
 
-  private lineNumber: number
-  private character: number
-
-  nameInitializationCallback: () => void // TODO: Make this better; not global. It is global because nameInitializer is linked to an event listener and can not accept a callbackk in its arguements
 
   constructor (workspace: Workspace, defaultSessionLayout: unknown, defaultName: string) {
     this.workspace = workspace
@@ -26,55 +20,62 @@ export class Session {
     this.layout = defaultSessionLayout
   }
 
+  public abstract loadSession: () => void
+  public abstract cleanUp: () => void
+}
 
-  loadWorkspace = () => {
-    if (this.layout) { // If there is a saved layout
-      this.workspace.changeLayout(this.layout)
-    } else { // Indicating the the default layout has not been changed; still null as assigned from SessionManager
-      this.workspace.detachLeavesOfType("markdown") 
-    }
-    // Because the file does not open right when the workspace is switched, I need to open in on the file change
-    this.workspace.on('file-open', this.loadCursorPosition)
-  }
+export class DefaultSessionState extends Session {
+  private activeSession: boolean
 
   /** Will initiate renaming the session to the first opened file */
-  initializeName = (callback: () => void) => {
-    this.nameInitializationCallback = callback // Sets this so the nameInitializer will be able to access it. This is confusing because I want to use nameInitializer as a references for the workspace.off function, so I am not giving it parameters. 
+  initializeName = async (callback: () => void): Promise<WorkingSessionState | null> => {
+    const activeSession = this.activeSession // Idk what to do about this
 
-    const compose = async (file: TFile) => {
-      if (!file) return // Somehow prevents lazy evaluation, which turns off the event listener before the function is called? WTF javascript. 
-      this.nameInitializer(file)
-      this.workspace.off("file-open", compose)
-      callback()
-    }
+    const file: TFile = await new Promise(resolve => {
+      this.workspace.on("file-open", function(file: TFile) {
+        if (!activeSession) return // If the session has changed
+        this.workspace.off("file-open", this)
+        resolve(file)
+      })
+    })
 
-    this.turnOffNameInitializer = () => this.workspace.off("file-open", compose)
-    this.workspace.on('file-open', compose)
-  }
+    if (!activeSession) return null // If the session has changed
 
-  /** This function is definied by the initialze name function, and at first is undefined. */
-  private turnOffNameInitializer: (() => void) | null
-
-  private nameInitializer = (firstFile: TFile) => {
-    if (!firstFile) {
-      return
-    }
-
-    // precaution incase the event gets called twice before it finishes or name is changed by user before being automatically set
-    if (!this.defaultName) {
-      this.workspace.off('file-open', this.nameInitializer)
-      return 
-    }
-
-    this.name = firstFile.name
-    this.defaultName = false
-
+    const name = file.name
     new Notice(`New workspace Renamed to: "${this.name}"`)
+    callback()
 
-    // Killing the event listener
-    // this.workspace.off('file-open', this.nameInitializer)
+    // After Default session is renamed, it becomes a working session, so working state
 
+    const nextState = new WorkingSessionState(this.workspace, this.layout, name)
+    return nextState
   }
+
+  loadSession = () => {
+    this.workspace.detachLeavesOfType("markdown") 
+    this.activeSession = true
+  }
+
+  cleanUp = () => {
+    this.activeSession = false
+  }
+
+  changeName = (name: string, callback: () => void): WorkingSessionState => {
+    const workingSession = new WorkingSessionState(this.workspace, this.layout, name)
+    callback()
+    return workingSession
+  }
+
+}
+
+export class WorkingSessionState extends Session {
+
+  constructor(workspace: Workspace, workingSessionLayout: unknown, name: string) { // TODO: Make package visibility
+    super (workspace, workingSessionLayout, name)
+  }
+
+  private lineNumber: number
+  private character: number
 
   private saveCursorPosition = () => {
     const view = this.workspace.getActiveViewOfType(MarkdownView)
@@ -110,6 +111,18 @@ export class Session {
     this.layout = this.workspace.getLayout()
   }
 
+  loadSession = () => {
+    this.workspace.changeLayout(this.layout)
+
+    // Because the file does not open right when the workspace is switched, I need to open in on the file change
+    this.workspace.on('file-open', this.loadCursorPosition)
+  }
+
+  changeName = (name: string, callback: () => void) => {
+    this.name = name
+    callback()
+  }
+
   cleanUp = () => {
     // Referenced in the loadWorkspace function, the loadCursor will be run when the first file is opened. When the workspace is closed, this listener needs to be turned off. 
     this.workspace.off('file-open', this.loadCursorPosition)
@@ -117,11 +130,8 @@ export class Session {
     // Saving the state of the workspace
     this.workspaceLayoutUpdater()
 
-    // Stopping the name initialzation function
-    if (this.turnOffNameInitializer) this.turnOffNameInitializer()
-
     // Saving the cursor position to be loaded at the next loadWorkspace call
     this.saveCursorPosition()
   }
-
 }
+

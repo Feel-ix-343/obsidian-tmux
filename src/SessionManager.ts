@@ -1,5 +1,5 @@
 import { Notice, Workspace } from "obsidian"
-import { Session } from "./Session"
+import { DefaultSessionState, Session, WorkingSessionState } from "./Session"
 
 
 export class SessionManager {
@@ -17,30 +17,31 @@ export class SessionManager {
   public createAndLoadSession = (): Session => {
     this.sessions.get(this.activeSessionId)?.cleanUp()
 
-    const newSession = new Session(
-            this.workspace,
-            null,
-            'New Session'
+    const newDefaultSession = new DefaultSessionState(
+      this.workspace,
+      null, // TODO: have the user define a default workspace; this would allow someboyd like you to reset to the flow note
+      'New Session',
     )
 
-    this.sessions.set(newSession.id, newSession)
-    this.activeSessionId = newSession.id
+    this.sessions.set(newDefaultSession.id, newDefaultSession)
+    this.activeSessionId = newDefaultSession.id
 
     // Updating observer on the new changes!! Exciting!!
     this.callUpdateSubscriptionObservers()
-    newSession.initializeName(this.callUpdateSubscriptionObservers)
-    newSession.loadWorkspace() // Loads the default workspace
+    // newDefaultSession.initializeName(this.callUpdateSubscriptionObservers)
+    newDefaultSession.loadSession() // Loads the default workspace
 
-    return newSession
+    newDefaultSession.initializeName(this.callUpdateSubscriptionObservers).then(workingSession => {
+      if (workingSession) this.sessions.set(this.activeSessionId, workingSession)
+    })
+
+    return newDefaultSession
   }
 
   public changeSession = (newSession: Session) => {
     this.sessions.get(this.activeSessionId)?.cleanUp()
     this.activeSessionId = newSession.id
-    newSession.loadWorkspace()
-    // If the new session is still default
-    if (newSession.defaultName) newSession.initializeName(this.callUpdateSubscriptionObservers)
-
+    newSession.loadSession()
     this.callUpdateSubscriptionObservers()
   }
 
@@ -64,9 +65,11 @@ export class SessionManager {
       return
     }
 
-    activeSession.name = name
-    this.callUpdateSubscriptionObservers()
-    activeSession.defaultName = false
+    if (activeSession instanceof DefaultSessionState) {
+      this.sessions.set(this.activeSessionId, activeSession.changeName(name, this.callUpdateSubscriptionObservers))
+    } else if (activeSession instanceof WorkingSessionState) {
+      activeSession.changeName(name, this.callUpdateSubscriptionObservers)
+    }
   }
 
   private getSessionFromActive = (direction: number): Session | undefined => {
