@@ -29,6 +29,15 @@ export abstract class Session {
 export class DefaultSessionState extends Session {
   private activeSession: boolean
 
+  loadSession = async (callback?: () => void) => {
+    if (this.layout) {
+      await this.workspace.changeLayout(this.layout)
+    } else {
+      this.workspace.detachLeavesOfType("markdown") 
+    }
+    this.activeSession = true
+  }
+
   /** Will initiate renaming the session to the first opened file */
   initializeName = async (): Promise<WorkingSessionState | null> => {
 
@@ -56,15 +65,6 @@ export class DefaultSessionState extends Session {
     return nextState
   }
 
-  loadSession = async () => {
-    if (this.layout) {
-      await this.workspace.changeLayout(this.layout)
-    } else {
-      this.workspace.detachLeavesOfType("markdown") 
-    }
-    this.activeSession = true
-  }
-
   cleanUp = async () => {
     this.activeSession = false
   }
@@ -72,6 +72,7 @@ export class DefaultSessionState extends Session {
   changeName = (name: string, callback?: () => void): WorkingSessionState => {
     const workingSession = new WorkingSessionState(this.workspace, this.layout, name, this.id)
     if (callback) callback()
+    this.activeSession = false
     return workingSession
   }
 
@@ -82,7 +83,7 @@ export class WorkingSessionState extends Session {
   /**
   Constructors a working session state
   This probably should not be used by files outside of session.ts but IDK how to restrict that
-  @param workingSessionLayout Although this is unknown (for obsidian api reasons), it can not be null. 
+  @param workingSessionLayout Although this is any (for obsidian api reasons), it can not be null. 
   */
   constructor(workspace: Workspace, workingSessionLayout: unknown, name: string, id?: string) { 
     super (workspace, workingSessionLayout, name, id)

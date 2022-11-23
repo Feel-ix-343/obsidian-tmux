@@ -77,7 +77,7 @@ export default class ObsidianTmux extends Plugin {
       sessionsDisplayContainer.querySelectorAll(".session_display_element").forEach(node => node.remove())
       sessionsDisplayContainer.querySelectorAll(".session_close_button").forEach(node => node.remove())
 
-      const sessions = [...this.sessionManager.sessions.values()]
+      const sessions = [...this.sessionManager.sessions.sessions.values()]
 
       sessions.forEach(session => {
         sessionsDisplayContainer.createEl(

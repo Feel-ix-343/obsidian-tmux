@@ -1,15 +1,38 @@
 import { Notice, Workspace } from "obsidian"
 import { DefaultSessionState, Session, WorkingSessionState } from "./Session"
 
+  /** I guess this is like a mini session manager, but it only interacts with the sessions map. I made it for DRY && to reduce global mutable state
+  */
+class Sessions {
+  public readonly sessions = new Map<string, Session>()
+  public activeSessionId: string
+
+  constructor(sessions: Map<string, Session>) {
+    this.sessions = sessions
+  }
+
+  public updateActiveSession = (session: Session, callback?: () => void) => {
+    this.sessions.set(session.id, session)
+    this.activeSessionId = session.id
+    if (callback) callback()
+  }
+
+  public getActiveSession = () => {
+    return this.sessions.get(this.activeSessionId)
+  }
+}
 
 export class SessionManager {
-  public readonly sessions = new Map<string, Session>()
-  private readonly sessionChangeObservers: Array<() => void> = []
   private readonly workspace: Workspace
 
   private defaultWorkspace = null
 
-  private activeSessionId: string // GLOBAL MUTABLE VARIABLE ALERT DONT HURT ME
+  private readonly sessionChangeObservers: Array<() => void> = []
+  private callUpdateSubscriptionObservers = () => {
+    this.sessionChangeObservers.forEach(callback => callback())
+  }
+
+  public readonly sessions = new Sessions(new Map<string, Session>())
 
   constructor(workspace: Workspace) {
     this.workspace = workspace
@@ -22,7 +45,7 @@ export class SessionManager {
   }
 
   public createAndLoadSession = async (): Promise<Session> => {
-    await this.sessions.get(this.activeSessionId)?.cleanUp()
+    await this.sessions.getActiveSession()?.cleanUp()
 
     const newDefaultSession = new DefaultSessionState(
       this.workspace,
@@ -30,19 +53,13 @@ export class SessionManager {
       'New Session',
     )
 
-    this.sessions.set(newDefaultSession.id, newDefaultSession)
-    this.activeSessionId = newDefaultSession.id
-
-    // Updating observer on the new changes!! Exciting!!
-    this.callUpdateSubscriptionObservers()
-    // newDefaultSession.initializeName(this.callUpdateSubscriptionObservers)
+    this.sessions.updateActiveSession(newDefaultSession, this.callUpdateSubscriptionObservers)
 
     await newDefaultSession.loadSession() // Loads the default workspace
 
     newDefaultSession.initializeName().then(workingSession => {
       if (workingSession) { 
-        this.sessions.set(this.activeSessionId, workingSession)
-        this.callUpdateSubscriptionObservers()
+        this.sessions.updateActiveSession(workingSession, this.callUpdateSubscriptionObservers)
       }
     })
 
@@ -50,54 +67,48 @@ export class SessionManager {
   }
 
   public changeSession = async (newSession: Session) => {
-    await this.sessions.get(this.activeSessionId)?.cleanUp()
-    this.activeSessionId = newSession.id
-
+    await this.sessions.getActiveSession()?.cleanUp()
+    this.sessions.updateActiveSession(newSession, this.callUpdateSubscriptionObservers)
     await newSession.loadSession()
 
     if (newSession instanceof DefaultSessionState) {
       newSession.initializeName().then(workingSession => {
         if (workingSession) { 
-          this.sessions.set(this.activeSessionId, workingSession)
-          this.callUpdateSubscriptionObservers()
+          this.sessions.updateActiveSession(workingSession, this.callUpdateSubscriptionObservers)
         }
       })
     }
-
-    this.callUpdateSubscriptionObservers()
   }
 
-  private callUpdateSubscriptionObservers = () => {
-    this.sessionChangeObservers.forEach(callback => callback())
-  }
 
   public sessionUpdateSubscription = (observer: () => void) => {
     this.sessionChangeObservers.push(observer)
   }
 
   public checkSessionActive = (session: Session) => {
-    if (session.id == this.activeSessionId) return true
-    else return false
+    return session === this.sessions.getActiveSession()
   }
 
   public changeActiveSessionName = (name: string) => {
-    const activeSession = this.sessions.get(this.activeSessionId)
+    const activeSession = this.sessions.getActiveSession()
     if (!activeSession) {
       new Notice("No Active Session")
       return
     }
 
     if (activeSession instanceof DefaultSessionState) {
-      this.sessions.set(this.activeSessionId, activeSession.changeName(name, this.callUpdateSubscriptionObservers))
+      this.sessions.updateActiveSession(activeSession.changeName(name), this.callUpdateSubscriptionObservers)
     } else if (activeSession instanceof WorkingSessionState) {
       activeSession.changeName(name, this.callUpdateSubscriptionObservers)
     }
   }
 
   private getSessionFromActive = (direction: number): Session | undefined => {
-    const ids = [...this.sessions.keys()]
-    const activeSessionIndex = ids.indexOf(this.activeSessionId)
-    const newSession = this.sessions.get(ids[activeSessionIndex + direction])
+    const ids = [...this.sessions.sessions.keys()]
+    const activeSession = this.sessions.getActiveSession()
+    if (!activeSession) return undefined
+    const activeSessionIndex = ids.indexOf(activeSession.id)
+    const newSession = this.sessions.sessions.get(ids[activeSessionIndex + direction])
 
     return newSession
   }
@@ -121,7 +132,7 @@ export class SessionManager {
   }
 
   public killSession = (sessionId: string) => {
-    if (sessionId == this.activeSessionId) {
+    if (sessionId == this.sessions.getActiveSession()?.id) {
       // Switch sessions
       const sleft = this.getSessionFromActive(-1)
       if (sleft) {
@@ -136,12 +147,14 @@ export class SessionManager {
       }
     }
 
-    this.sessions.delete(sessionId)
+    this.sessions.sessions.delete(sessionId)
     this.callUpdateSubscriptionObservers()
   }
 
   public killActiveSession = () => {
-    this.killSession(this.activeSessionId)
+    const activeSession = this.sessions.getActiveSession()
+    if (!activeSession) return null
+    this.killSession(activeSession.id)
   }
 
   public moveCurrentNoteToNewWorkspace = async () => {
@@ -154,13 +167,11 @@ export class SessionManager {
       return
     }
     // Close the current workspace
-    await this.sessions.get(this.activeSessionId)?.cleanUp()
+    await this.sessions.getActiveSession()?.cleanUp()
 
     // Creating and loading a new session
     const newSession = new DefaultSessionState(this.workspace, null, "opening file...")
-    this.sessions.set(newSession.id, newSession)
-    this.activeSessionId = newSession.id
-    this.callUpdateSubscriptionObservers()
+    this.sessions.updateActiveSession(newSession, this.callUpdateSubscriptionObservers)
 
     await newSession.loadSession()
 
@@ -168,7 +179,6 @@ export class SessionManager {
     this.workspace.getMostRecentLeaf()?.openFile(activeFile) // This should implicitly update the session created above. 
 
     const newWorkingSession = newSession.changeName(activeFile.name)
-    this.sessions.set(newSession.id, newWorkingSession)
-    this.callUpdateSubscriptionObservers()
+    this.sessions.updateActiveSession(newWorkingSession, this.callUpdateSubscriptionObservers)
   }
 }
