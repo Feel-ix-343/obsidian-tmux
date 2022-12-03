@@ -166,6 +166,9 @@ export class SessionManager {
       new Notice("No Active File")
       return
     }
+
+    this.workspace.getLeaf(false).detach() // If a file is open, then the leaf will be active. This leaf needs to be closed
+
     // Close the current workspace
     await this.sessions.getActiveSession()?.cleanUp()
 
