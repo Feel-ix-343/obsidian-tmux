@@ -28,11 +28,12 @@ export abstract class Session {
 
 export class DefaultSessionState extends Session {
   private activeSession: boolean
+  private initializingName: boolean
 
-  loadSession = async (callback?: () => void) => {
-    if (this.layout) {
+  loadSession = async () => {
+    if (this.layout) { // If there is a saved layout
       await this.workspace.changeLayout(this.layout)
-    } else {
+    } else { // If the default layout is still present
       this.workspace.detachLeavesOfType("markdown") 
     }
     this.activeSession = true
@@ -40,14 +41,15 @@ export class DefaultSessionState extends Session {
 
   /** Will initiate renaming the session to the first opened file */
   initializeName = async (): Promise<WorkingSessionState | null> => {
-
+    if (this.initializingName) return null // This means that an async initializeName has already been called. It shouldn't be called twice!
+    this.initializingName = true
 
     const activeSession = () => this.activeSession // When accesing this var from the thread, the thread needs the most updated value, not the saved value. Needs to be lazy loaded
 
     const workspace = this.workspace
     const file: TFile = await new Promise(resolve => {
       workspace.on("file-open", function(file: TFile) {
-        if (!activeSession() || !file) return // If the session has changed
+        if (!activeSession() || !file) return // If the session has changed  ;; This should not cause a resolve
         workspace.off("file-open", this)
         resolve(file)
       })
