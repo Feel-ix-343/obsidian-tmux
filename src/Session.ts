@@ -35,6 +35,7 @@ export class DefaultSessionState extends Session {
       await this.workspace.changeLayout(this.layout)
     } else { // If the default layout is still present
       this.workspace.detachLeavesOfType("markdown") 
+      this.workspace.detachLeavesOfType("canvas") 
     }
     this.activeSession = true
   }
